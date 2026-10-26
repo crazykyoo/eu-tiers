@@ -197,9 +197,26 @@ const API_URL = 'https://raw.githubusercontent.com/crazykyoo/eu-tiers-data/main/
 
 const TIER_SCORES={ht1:60,lt1:48,ht2:32,lt2:24,ht3:16,lt3:10,ht4:5,lt4:3,ht5:2,lt5:1};
 const TIER_ORDER=['ht1','lt1','ht2','lt2','ht3','lt3','ht4','lt4','ht5','lt5'];
-const KITS=['sword','axe','uhc','pot','nethop','smp','diasmp','mace','vannila'];
-const KIT_LABELS={sword:'Sword',axe:'Axe',uhc:'UHC',pot:'Pot',nethop:'NetheriteOP',smp:'SMP',diasmp:'DiaSMP',mace:'Mace',vannila:'Vanilla'};
-const KIT_ICONS={sword:'🗡️',axe:'🪓',uhc:'🍎',pot:'🍷',nethop:'🖤',smp:'🛡️',diasmp:'💠',mace:'🔨',vannila:'💎'};
+const KITS=['sword','axe','uhc','pot','nethop','smp','diasmp','mace','vannila','cart'];
+const KIT_LABELS={sword:'Sword',axe:'Axe',uhc:'UHC',pot:'Pot',nethop:'NetheriteOP',smp:'SMP',diasmp:'DiaSMP',mace:'Mace',vannila:'Vanilla',cart:'Cart'};
+// Custom Discord emoji (server-uploaded) shown as small images — Discord doesn't allow literal custom emoji on the web, so these render as <img> tags from Discord's CDN
+const KIT_ICON_URLS={
+  sword:'https://cdn.discordapp.com/emojis/1563658168939061359.png',
+  axe:'https://cdn.discordapp.com/emojis/1563653555326296114.png',
+  uhc:'https://cdn.discordapp.com/emojis/1563653500754206773.png',
+  pot:'https://cdn.discordapp.com/emojis/1563653402930446458.png',
+  nethop:'https://cdn.discordapp.com/emojis/1563653347834208356.png',
+  smp:'https://cdn.discordapp.com/emojis/1563653276350545980.png',
+  diasmp:'https://cdn.discordapp.com/emojis/1563652830496165938.png',
+  mace:'https://cdn.discordapp.com/emojis/1563653460484816957.png',
+  vannila:'https://cdn.discordapp.com/emojis/1563657771893788732.png',
+  cart:'https://cdn.discordapp.com/emojis/1560232934374383666.png'
+};
+function renderKitIcon(kit,size){
+  const url=KIT_ICON_URLS[kit]; if(!url)return'';
+  const s=size||16;
+  return`<img src="${url}" alt="${kit}" style="width:${s}px;height:${s}px;vertical-align:-3px;image-rendering:pixelated;">`;
+}
 
 const TIER_LABELS={ht1:'HT1',lt1:'LT1',ht2:'HT2',lt2:'LT2',ht3:'HT3',lt3:'LT3',ht4:'HT4',lt4:'LT4',ht5:'HT5',lt5:'LT5'};
 
@@ -252,7 +269,7 @@ async function loadPlayers(){
 
 function buildFilters(){
   const wrap=document.getElementById('filters');
-  const tabs=[{key:'overall',label:'Overall 🏆'},...KITS.map(k=>({key:k,label:`${KIT_ICONS[k]} ${KIT_LABELS[k]}`}))];
+  const tabs=[{key:'overall',label:'Overall 🏆'},...KITS.map(k=>({key:k,label:`${renderKitIcon(k,14)} ${KIT_LABELS[k]}`}))];
   wrap.innerHTML=tabs.map(t=>`<button class="filter-btn${t.key===activeKit?' active':''}" data-kit="${t.key}">${t.label}</button>`).join('');
   wrap.querySelectorAll('.filter-btn').forEach(btn=>{
     btn.addEventListener('click',()=>{
@@ -279,7 +296,7 @@ function buildDetails(p){
   const rows=kitsWithData.map(k=>{
     const tier=p.kits[k], pts=TIER_SCORES[tier]||0;
     return`<div class="kit-detail-row">
-      <div class="kit-detail-left">${KIT_ICONS[k]} <span>${KIT_LABELS[k]}</span> ${tierBadge(tier)}</div>
+      <div class="kit-detail-left">${renderKitIcon(k,16)} <span>${KIT_LABELS[k]}</span> ${tierBadge(tier)}</div>
       <span class="kit-detail-pts">+${pts} pts</span>
     </div>`;
   }).join('');
@@ -310,7 +327,7 @@ function renderOverall(){
     const rank=i+1;
     const rankStr=rank<=3?['🥇','🥈','🥉'][rank-1]:rank;
     const rankClass=rank<=3?'':' rank-default';
-    const badges=KITS.filter(k=>p.kits[k]).map(k=>tierBadge(p.kits[k],KIT_ICONS[k])).join('');
+    const badges=KITS.filter(k=>p.kits[k]).map(k=>tierBadge(p.kits[k],renderKitIcon(k,11))).join('');
     const avatarUrl=skinUrl(p.ign,'avatar');
     return`<div class="player-card" data-rank="${rank<=3?rank:''}" data-pid="${esc(p.id)}">
       <div class="card-header" onclick="toggleCard(this)">
@@ -383,7 +400,7 @@ function renderSearch(){
     const kitRows=KITS.filter(k=>p.kits[k]).map(k=>{
       const tier=p.kits[k], pts=TIER_SCORES[tier]||0;
       return`<div class="profile-kit-row">
-        <div class="profile-kit-left">${KIT_ICONS[k]} <span>${KIT_LABELS[k]}</span> ${tierBadge(tier)}</div>
+        <div class="profile-kit-left">${renderKitIcon(k,16)} <span>${KIT_LABELS[k]}</span> ${tierBadge(tier)}</div>
         <span class="profile-kit-pts">+${pts} pts</span>
       </div>`;
     }).join('');
