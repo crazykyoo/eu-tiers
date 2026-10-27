@@ -20,6 +20,14 @@ body::before{content:'';position:fixed;inset:0;z-index:0;
 body::after{content:'';position:fixed;top:-200px;left:50%;transform:translateX(-50%);
   width:800px;height:400px;background:radial-gradient(ellipse,rgba(124,58,237,.18) 0%,transparent 70%);
   pointer-events:none;z-index:0;}
+/* Floating animated background blobs — extra depth/movement */
+.bg-blob{position:fixed;border-radius:50%;filter:blur(60px);pointer-events:none;z-index:0;}
+.bg-blob-1{top:5%;left:-8%;width:380px;height:380px;background:radial-gradient(circle,rgba(168,85,247,.16),transparent 70%);animation:floatA 20s ease-in-out infinite;}
+.bg-blob-2{top:45%;right:-10%;width:420px;height:420px;background:radial-gradient(circle,rgba(236,72,153,.1),transparent 70%);animation:floatB 24s ease-in-out infinite;}
+.bg-blob-3{bottom:-5%;left:20%;width:380px;height:380px;background:radial-gradient(circle,rgba(59,130,246,.09),transparent 70%);animation:floatC 27s ease-in-out infinite;}
+@keyframes floatA{0%,100%{transform:translate(0,0);}50%{transform:translate(40px,35px);}}
+@keyframes floatB{0%,100%{transform:translate(0,0);}50%{transform:translate(-35px,45px);}}
+@keyframes floatC{0%,100%{transform:translate(0,0);}50%{transform:translate(30px,-30px);}}
 .wrap{position:relative;z-index:1;max-width:960px;margin:0 auto;padding:0 16px;}
 
 /* HEADER */
@@ -161,7 +169,13 @@ header{position:sticky;top:0;z-index:100;background:rgba(6,6,15,.88);backdrop-fi
 .modal-overlay.open{display:flex;}
 .modal-box{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:28px 22px 22px;
   max-width:360px;width:100%;position:relative;box-shadow:0 20px 60px rgba(0,0,0,.5);
-  max-height:85vh;overflow-y:auto;}
+  max-height:85vh;overflow-y:auto;overflow-x:hidden;}
+.modal-box::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,transparent,var(--accent2),transparent);}
+#modal-body{position:relative;}
+.modal-glow{position:absolute;top:-34px;left:50%;transform:translateX(-50%);width:200px;height:200px;
+  border-radius:50%;filter:blur(45px);pointer-events:none;z-index:0;}
+.modal-avatar-wrap,.modal-name,.modal-points-row,.modal-kit-grid{position:relative;z-index:1;}
 .modal-close{position:absolute;top:14px;right:14px;width:28px;height:28px;border-radius:50%;
   background:var(--surface);border:1px solid var(--border);color:var(--muted);cursor:pointer;
   display:flex;align-items:center;justify-content:center;font-size:.85rem;}
@@ -192,6 +206,9 @@ footer span{color:var(--accent2);}
 </style>
 </head>
 <body>
+<div class="bg-blob bg-blob-1"></div>
+<div class="bg-blob bg-blob-2"></div>
+<div class="bg-blob bg-blob-3"></div>
 <header>
   <div class="header-inner">
     <div class="logo">EU Tiers <span>Leaderboard</span></div>
@@ -458,8 +475,10 @@ function openProfileModal(playerId){
       ${tierBadge(p.kits[k])}
     </div>`;
   }).join('');
+  const titleColor=getTitle(p.overall).color;
   document.getElementById('modal-body').innerHTML=`
-    <div class="modal-avatar-wrap"><img class="modal-avatar" src="${avatarUrl}" alt="${esc(p.ign)}" onerror="this.style.display='none'"></div>
+    <div class="modal-glow" style="background:radial-gradient(circle,${titleColor}55,transparent 70%);"></div>
+    <div class="modal-avatar-wrap"><img class="modal-avatar" src="${avatarUrl}" alt="${esc(p.ign)}" style="border-color:${titleColor};" onerror="this.style.display='none'"></div>
     <div class="modal-name">${esc(p.ign)}</div>
     <div class="modal-points-row">
       ${titleBadge(p.overall)}
