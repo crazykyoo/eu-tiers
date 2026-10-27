@@ -136,6 +136,7 @@ header{position:sticky;top:0;z-index:100;background:rgba(6,6,15,.88);backdrop-fi
 .col-player{padding:4px 8px;border-radius:5px;font-size:.78rem;font-weight:500;
   background:var(--surface);border:1px solid var(--border);white-space:nowrap;
   overflow:hidden;text-overflow:ellipsis;color:var(--text);}
+.col-empty{padding:10px 4px;text-align:center;font-size:.72rem;color:var(--muted);opacity:.5;}
 
 /* SEARCH / PROFILE */
 .profile-card{background:var(--card);border:1px solid var(--border);border-radius:12px;
@@ -153,6 +154,29 @@ header{position:sticky;top:0;z-index:100;background:rgba(6,6,15,.88);backdrop-fi
   padding:5px 10px;background:var(--surface);border-radius:7px;border:1px solid var(--border);}
 .profile-kit-left{display:flex;align-items:center;gap:6px;font-size:.82rem;}
 .profile-kit-pts{font-size:.7rem;color:var(--muted);}
+
+/* SEARCH RESULT MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;z-index:1000;background:rgba(4,4,10,.75);
+  backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:20px;}
+.modal-overlay.open{display:flex;}
+.modal-box{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:28px 22px 22px;
+  max-width:360px;width:100%;position:relative;box-shadow:0 20px 60px rgba(0,0,0,.5);
+  max-height:85vh;overflow-y:auto;}
+.modal-close{position:absolute;top:14px;right:14px;width:28px;height:28px;border-radius:50%;
+  background:var(--surface);border:1px solid var(--border);color:var(--muted);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;font-size:.85rem;}
+.modal-close:hover{color:var(--text);border-color:var(--accent);}
+.modal-avatar-wrap{text-align:center;margin-bottom:14px;}
+.modal-avatar{width:84px;height:84px;border-radius:50%;image-rendering:pixelated;
+  border:3px solid var(--accent);box-shadow:0 0 24px var(--glow);}
+.modal-name{text-align:center;font-family:'Space Grotesk',sans-serif;font-size:1.25rem;font-weight:700;color:var(--white);margin-bottom:8px;}
+.modal-points-row{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:18px;}
+.modal-points{font-family:'Space Grotesk',sans-serif;font-size:1.05rem;font-weight:700;color:var(--accent2);}
+.modal-kit-grid{display:flex;flex-wrap:wrap;justify-content:center;gap:14px;}
+.modal-kit-item{display:flex;flex-direction:column;align-items:center;gap:6px;width:56px;}
+.modal-kit-icon-circle{width:44px;height:44px;border-radius:50%;background:var(--surface);
+  border:2px solid var(--border);display:flex;align-items:center;justify-content:center;}
+.search-result-card{cursor:pointer;}
 
 /* MISC */
 .empty{text-align:center;padding:60px 0;color:var(--muted);font-size:.88rem;}
@@ -191,6 +215,13 @@ footer span{color:var(--accent2);}
   </div>
 </div>
 <footer><div class="wrap">EU Tiers &nbsp;·&nbsp; Powered by <span>Discord Bot V3.3</span></div></footer>
+
+<div id="profile-modal-overlay" class="modal-overlay" onclick="closeModalOnOverlay(event)">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeProfileModal()">✕</button>
+    <div id="modal-body"></div>
+  </div>
+</div>
 
 <script>
 const API_URL = 'https://raw.githubusercontent.com/crazykyoo/eu-tiers-data/main/players.json';
@@ -358,10 +389,8 @@ function toggleCard(header){
 
 function renderColumns(){
   const el=document.getElementById('content');
-  const kitPlayers=allPlayers.filter(p=>p.kits[activeKit]);
-  if(!kitPlayers.length){el.innerHTML='<div class="empty"><b>No data</b>No players evaluated in this kit yet.</div>';return;}
   const colData={};TIER_ORDER.forEach(t=>{colData[t]=[];});
-  kitPlayers.forEach(p=>{const t=p.kits[activeKit];if(colData[t])colData[t].push(p);});
+  allPlayers.forEach(p=>{const t=p.kits[activeKit];if(t&&colData[t])colData[t].push(p);});
   TIER_ORDER.forEach(t=>{colData[t].sort((a,b)=>b.overall-a.overall);});
   const HDR={
     lt5:{color:'#555',border:'rgba(55,55,55,.25)',bg:'rgba(50,50,50,.18)'},
@@ -375,12 +404,12 @@ function renderColumns(){
     lt1:{color:'#ffd700',border:'rgba(255,215,0,.4)',bg:'rgba(255,215,0,.12)'},
     ht1:{color:'#fff8a0',border:'rgba(255,248,120,.45)',bg:'rgba(255,248,120,.12)'},
   };
-  const activeTiers=TIER_ORDER.filter(t=>colData[t].length>0);
-  const cols=activeTiers.map(t=>{
-    const h=HDR[t];
+  // Všech 10 tierů se zobrazí vždy, i prázdné — s počtem hráčů v závorce
+  const cols=TIER_ORDER.map(t=>{
+    const h=HDR[t], count=colData[t].length;
     const players=colData[t].map(p=>`<div class="col-player" title="${esc(p.ign)} — ${p.overall}pts">${esc(p.ign)}</div>`).join('');
     return`<div class="tier-col">
-      <div class="tier-col-hdr" style="color:${h.color};border-color:${h.border};background:${h.bg}">${t.toUpperCase()}</div>
+      <div class="tier-col-hdr" style="color:${h.color};border-color:${h.border};background:${h.bg}">${t.toUpperCase()} (${count})</div>
       <div class="tier-col-body">${players||'<div class="col-empty">—</div>'}</div>
     </div>`;
   }).join('');
@@ -392,35 +421,59 @@ function renderSearch(){
   const q=searchVal.toLowerCase();
   const exact=allPlayers.filter(p=>p.ign.toLowerCase()===q);
   const fuzzy=allPlayers.filter(p=>p.ign.toLowerCase().includes(q)&&!exact.includes(p)).sort((a,b)=>b.overall-a.overall);
-  const profiles=[...exact,...fuzzy].slice(0,5);
-  if(!profiles.length){el.innerHTML='<div class="empty"><b>No players found</b>Try a different name.</div>';return;}
-  el.innerHTML=profiles.map(p=>{
-    const t=getTitle(p.overall);
-    const bodyUrl=skinUrl(p.ign,'body');
-    const kitRows=KITS.filter(k=>p.kits[k]).map(k=>{
-      const tier=p.kits[k], pts=TIER_SCORES[tier]||0;
-      return`<div class="profile-kit-row">
-        <div class="profile-kit-left">${renderKitIcon(k,16)} <span>${KIT_LABELS[k]}</span> ${tierBadge(tier)}</div>
-        <span class="profile-kit-pts">+${pts} pts</span>
-      </div>`;
-    }).join('');
-    return`<div class="profile-card">
-      <div class="profile-top">
-        <div class="profile-skin">
-          <img class="profile-body-img" src="${bodyUrl}" alt="${esc(p.ign)}" onerror="this.style.display='none'">
+  const results=[...exact,...fuzzy].slice(0,8);
+  if(!results.length){el.innerHTML='<div class="empty"><b>No players found</b>Try a different name.</div>';return;}
+  // Kompaktní klikatelné řádky — kliknutím se otevře profil v modal okně
+  el.innerHTML='<div id="leaderboard">'+results.map(p=>{
+    const avatarUrl=skinUrl(p.ign,'avatar');
+    const badges=KITS.filter(k=>p.kits[k]).map(k=>tierBadge(p.kits[k],renderKitIcon(k,11))).join('');
+    return`<div class="player-card search-result-card" onclick="openProfileModal('${p.id}')">
+      <div class="card-header">
+        <div class="rank-default" style="font-size:1rem;">🔍</div>
+        <img class="mc-avatar" src="${avatarUrl}" alt="${esc(p.ign)}" onerror="this.outerHTML='<div class=mc-avatar-placeholder></div>'">
+        <div class="player-info">
+          <div class="player-ign">${esc(p.ign)}</div>
+          <div class="player-meta">${titleBadge(p.overall)}</div>
+          <div class="kit-badges">${badges}</div>
         </div>
-        <div class="profile-info">
-          <div class="profile-ign">${esc(p.ign)}</div>
-          <div style="margin-bottom:4px;">${titleBadge(p.overall)}</div>
-        </div>
-        <div class="profile-right">
-          <div class="profile-pts">${p.overall}</div>
-          <div class="profile-pts-label">points</div>
+        <div class="score-wrap">
+          <div>
+            <div class="score-val">${p.overall}</div>
+            <div class="score-label">points</div>
+          </div>
         </div>
       </div>
-      <div class="profile-kits">${kitRows||'<span style="color:var(--muted);font-size:.82rem;">No kits evaluated yet.</span>'}</div>
+    </div>`;
+  }).join('')+'</div>';
+}
+
+// ── PROFILE MODAL (opened from search results) ─────────────────────────────
+function openProfileModal(playerId){
+  const p=allPlayers.find(pl=>pl.id===playerId);
+  if(!p)return;
+  const avatarUrl=skinUrl(p.ign,'avatar');
+  const kitItems=KITS.filter(k=>p.kits[k]).map(k=>{
+    return`<div class="modal-kit-item">
+      <div class="modal-kit-icon-circle">${renderKitIcon(k,22)}</div>
+      ${tierBadge(p.kits[k])}
     </div>`;
   }).join('');
+  document.getElementById('modal-body').innerHTML=`
+    <div class="modal-avatar-wrap"><img class="modal-avatar" src="${avatarUrl}" alt="${esc(p.ign)}" onerror="this.style.display='none'"></div>
+    <div class="modal-name">${esc(p.ign)}</div>
+    <div class="modal-points-row">
+      ${titleBadge(p.overall)}
+      <span class="modal-points">${p.overall} pts</span>
+    </div>
+    <div class="modal-kit-grid">${kitItems||'<span style="color:var(--muted);font-size:.85rem;">No kits evaluated yet.</span>'}</div>
+  `;
+  document.getElementById('profile-modal-overlay').classList.add('open');
+}
+function closeProfileModal(){
+  document.getElementById('profile-modal-overlay').classList.remove('open');
+}
+function closeModalOnOverlay(e){
+  if(e.target.id==='profile-modal-overlay') closeProfileModal();
 }
 
 document.getElementById('search').addEventListener('input',e=>{
