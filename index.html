@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>EU Tiers Leaderboard — Ultimate Edition</title>
+<title>EU Tiers Leaderboard</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap');
 
@@ -157,7 +157,7 @@ header {
 .stat-value { font-family: 'Space Grotesk', sans-serif; font-size: 1.4rem; font-weight: 700; color: #fff; }
 
 /* HERO */
-.hero { padding: 20px 0 20px; text-align: center; }
+.hero { padding: 25px 0 15px; text-align: center; }
 .hero-title {
   font-family: 'Space Grotesk', sans-serif;
   font-size: clamp(2.2rem, 5vw, 3.5rem);
@@ -166,9 +166,7 @@ header {
   background: linear-gradient(180deg, #ffffff 20%, #c084fc 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  margin-bottom: 8px;
 }
-.hero-sub { color: var(--muted); font-size: 1rem; }
 
 /* CONTROLS */
 .controls { display: flex; flex-direction: column; gap: 16px; margin-bottom: 28px; }
@@ -308,7 +306,6 @@ header {
   box-shadow: 0 12px 30px rgba(0,0,0,0.4);
 }
 
-/* Rank #1 Animated Glowing Border Effect */
 .player-card[data-rank="1"] {
   background: linear-gradient(135deg, rgba(245, 158, 11, 0.08) 0%, var(--card) 60%);
   border-color: rgba(245, 158, 11, 0.5);
@@ -544,7 +541,7 @@ header {
 }
 .modal-points-row { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 24px; }
 .modal-points { font-family: 'Space Grotesk', sans-serif; font-size: 1.3rem; font-weight: 700; color: var(--accent-light); }
-.modal-kit-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; }
+.modal-kit-grid { display: flex; flex-wrap: wrap; justifyContent: center; gap: 14px; }
 .modal-kit-item { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 65px; }
 .modal-kit-icon-circle {
   width: 52px;
@@ -601,15 +598,14 @@ footer span { color: var(--accent-light); font-weight: 700; }
 
 <header>
   <div class="header-inner">
-    <div class="logo">EU Tiers <span>Ultimate</span></div>
+    <div class="logo">EU Tiers <span>Leaderboard</span></div>
     <div class="hdr-count" id="hdr-count">Loading...</div>
   </div>
 </header>
 
 <div class="wrap">
   <div class="hero">
-    <div class="hero-title">Competitive Leaderboard</div>
-    <div class="hero-sub">The ultimate platform for European Minecraft tier lists</div>
+    <div class="hero-title">EU Tiers Leaderboard</div>
   </div>
 
   <!-- STATS OVERVIEW BAR -->
